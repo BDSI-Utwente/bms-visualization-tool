@@ -1,154 +1,142 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+# load packages
+require(shiny)
+require(shinyjs)
+require(tidyverse)
+require(magrittr)
+require(googlesheets4)
 
-library(shiny)
-library(tidyverse)
+# helper functions
+source("functions/filterInput.R")
+source("renderers/render.R", chdir = TRUE)
 
-# prepare shared data 
-# note; you'll need to think of a clever solution on how to generate and filter plot types
-# that are valid for multiple (combinations of) criteria.
-plots <- tibble(
-    numVars = c(1,1,2,"many",1),
-    xLevel = c("Categorical", "Ordinal", "Ordinal", "Ratio", "Scale"),
-    yLevel = c("Count", "Count", "Scale", "Ratio", "Density"),
-    plotName = c("Piechart", "Piechart", "Barchart", "Multiline chart", "Density plot"),
-    plotImage = c(
-        "http://placekitten.com/400/300",
-        "http://placekitten.com/400/301",
-        "http://placekitten.com/400/302",
-        "http://placekitten.com/400/303",
-        "http://placekitten.com/400/304"
-    ),
-    plotDescription = c(
-        "It's round, it's ubiquitous, it's.... kinda bad.",
-        "It's round, it's ubiquitous, it's.... kinda bad.",
-        "Don't get these confused with a histogram! Also comes in coloured, stacked, grouped and horizontal variants.",
-        "The linear version of bar charts. Comes in many flavours, and has many uses.",
-        "Good at giving a quick glance of a distribution, but histograms might be more honest." ))
+# fetch data from google sheets
+googlesheets4::gs4_deauth()
+SHEET_ID <- "10eMzcaMgKPkKbALWkzPMKi6EXo3yt70PxqS6arhxHag"
+PLOTS <- googlesheets4::read_sheet(SHEET_ID, 1, col_types = "c")
+VARS <- googlesheets4::read_sheet(SHEET_ID, 2)
 
-plotNames <- plots %>% pull( plotName ) %>% unique() %>% sort()
+# prepare data
+searchableVars <- VARS %>% filter( search ) %>% pull( variable )
+multipleVars <- VARS %>% filter( multiple ) %>% pull( variable )
+PLOTS %<>% 
+    # create single text for all searchable attributes
+    unite(searchIndex, any_of(searchableVars), sep = "\n", remove = FALSE) %>%
+     
+    # split vector attributes
+    mutate(across(any_of(multipleVars), ~stringr::str_split(., ", ")))
 
 
+# UI ----------------------------------------------------------------------
 ui <- fluidPage(
+    tags$head(
+        # MathJax math rendering
+        tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js"),
+        
+        # highlight.js code highlighting
+        tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/highlight.min.js"),
+        tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/styles/default.min.css"),
+        
+        # custom button sorting function
+        shinyjs::useShinyjs(),
+        shinyjs::extendShinyjs("sortButtons.js", functions = c("sortButtons")),
+    ),
+    
     titlePanel("Henk's used plot emporium"),
     
     sidebarLayout(
         sidebarPanel(
-            # criteria
-            selectInput("numVars", "Number of variables:", plots$numVars %>% unique() %>% sort() ),
-            selectInput("xLevel", "Measurement level of x variable", plots$xLevel %>% unique() %>% sort()),
-            selectInput("yLevel", "Measurement level of y variable", plots$yLevel %>% unique() %>% sort()), 
-            
-            # dynamically generated buttons
-            uiOutput("plotChoices")
+            # build list of filter inputs from variables defined in the spreadsheet. 
+            VARS %>%
+                filter( filter ) %>%
+                rowwise() %>%
+                transmute(
+                    id = variable,
+                    label,
+                    data = PLOTS[[id]] %>% list,
+                    multiple
+                ) %>%
+                transpose() %>%
+                map(~createFilterInput(.$id, .$label, .$multiple, .$data)),
         ),
-
+        
         mainPanel(
-            fluidRow(column(12, textOutput("plotTitle", tags$h2))),
-            fluidRow( 
-                column(6, textOutput("plotDescription")),
-                column(6, htmlOutput("plotImage")),
-            )
+            # buttons
+            div( PLOTS %>% 
+                    select( id, name ) %>%
+                    arrange( id ) %>% 
+                    transpose() %>%
+                    map(~shiny::actionButton(.$id, .$name, 
+                                             class = "btn-primary", 
+                                             style = "margin: .2em .2em 0 0;")),
+                style = "display: flex; flex-flow: row wrap;",
+                id = "plot-button-container" ),
+            
+            # details
+            # textOutput("details"),
+            htmlOutput("details")
         )
     )
 )
 
-# Define server logic required to draw a histogram
+# SERVER ------------------------------------------------------------------
 server <- function(input, output, session) {
-    # reactive value to hold the name (or id) of the chosen plot
-    chosenPlot <- reactive({
-            if(!is.null(input$choice)){
-                input$choice
+    # selected plot
+    plot <- reactiveVal(NULL)
+    
+    # create a list of observers, one for each button
+    buttonObservers <- PLOTS %>%
+        pull(id) %>%
+        map(~observeEvent(input[[.]], {
+            id <- .
+            plot(PLOTS[PLOTS$id == id,] %>% slice(1)) # for some reason filter function doesn't work?
+            cat("selected:", plot()$id, "\n")
+        }))
+    
+    # filter observer ------------------------------------------
+    filterObserver <- observe({
+        filters <- VARS %>% 
+            filter( filter == TRUE )
+        plots <- PLOTS %>% applyFilter( filters, input )
+        
+        # after filtering data, update available choices on UI
+        for ( filter in filters %>% transpose() ){
+            
+            # get data applying all other filters
+            this <- filter$variable
+            data <- PLOTS %>% applyFilter( filters %>% filter( variable != this ), input )
+            
+            # update filter input
+            updateFilterInput(filter$variable, filter$multiple, data[[filter$variable]], input[[filter$variable]])
+        }
+        
+        # enable/disable buttons, then sorts
+        for (plot in PLOTS$id) {
+            if(plot %in% plots$id){
+                shinyjs::enable(plot) 
             } else {
-                ""
+                shinyjs::disable(plot)
             }
-        }) 
-    
-    # reactive expression that pulls data for the plot
-    chosenPlotData <- reactive({
-        plots %>% 
-            filter(plotName == chosenPlot()) %>%
-            slice(1)
-    })
-
-    # I'd like to have a separate buttons, but the observers don't want to work.
-    # # dynamically build observers for each of the plot type buttons
-    # for( name in plotNames){
-    #     id <- paste0("plot-", name)
-    #     cat(name, "::", id, "\n")
-    #     
-    #     observe({
-    #         input[[id]]
-    #         chosenPlot(name)
-    #     })
-    # }
-    
-    output$plotTitle <- renderText({
-        chosenPlotData()$plotName
+        }
+        shinyjs::js$sortButtons(hide = TRUE)
     })
     
-    output$plotDescription <- renderText(
-        chosenPlotData()$plotDescription
-    )
-    
-    output$plotImage <- renderText(
-        # modern semantic html uses a figure container for images
-        tags$figure(
-            # HTML image tag with alt text
-            tags$image(src = chosenPlotData()$plotImage, alt = chosenPlotData()$plotName),
-            tags$figcaption(chosenPlotData()$plotName)
+    # output blocks -----------------------------------------------------------
+    output$details <- renderText({
+        # pull out if no plot selected. 
+        selected <- plot()
+        if(is.null(selected)) return(invisible(NULL)) 
+        
+        cat("updating plot:", selected$id, "\n")
+        
+        div(
+            VARS %>% 
+                filter(type != "hidden") %>%
+                transpose() %>%
+                simplify_all() %>%
+                map(~renderPlotAttribute(., selected)),
+            id = "details-container"
         ) %>% as.character()
-    )
-    
-    # generate buttons for plot selection
-    output$plotChoices <- renderUI(
-        flowLayout({
-            # filter plot types for the chosen criteria
-            options <- plots %>% 
-                filter(
-                    numVars == input$numVars,
-                    xLevel == input$xLevel,
-                    yLevel == input$yLevel ) %>% 
-                pull( plotName ) %>% 
-                unique() %>% 
-                sort()
-            
-            # populate a selectize input with the valid choices
-            selectizeInput("choice", "Applicable plots", options )
-            
-            # I'd like to do separatae buttons, but I haven't been able to figure 
-            # out how to get the event handling set up.
-            # tags$div(
-            #     tags$label("Applicable plots"),
-            #     flowLayout(
-            #         lapply( plotNames, function(name) { 
-            #             id <- paste0("plot-", name)
-            #             
-            #             if (name %in% options ){
-            #                 
-            #                 actionButton(
-            #                     id,
-            #                     label = name, 
-            #                     class = "btn btn-primary")
-            #             } else {
-            #                 actionButton(
-            #                     id,
-            #                     label = name, 
-            #                     class = "btn",
-            #                     disabled = "true")
-            #             }   
-            #         })
-            #     )
-            # )
-        })
-    )
+    })
 }
 
-# Run the application 
-shinyApp(ui = ui, server = server)
+shinyApp(ui, server)
