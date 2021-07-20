@@ -6,12 +6,6 @@ renderPlotAttribute_Markdown <- function(var, data, plot){
     applyDynamicMarkup <- tags$script("MathJax.typeset(); hljs.highlightAll();")
     rendererOptions <- c("use_xhtml", "smartypants", "base64_images", "fragment_only")
     
-    cat("rendering markdown")
-    print(str(plot))
-    print(str(data))
-    
-    print(whisker::whisker.render(data, plot))
-    
     if(var$multiple){
         parts <- data %>%
             map(~whisker::whisker.render(template=., data = plot)) %>%
