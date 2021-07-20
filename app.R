@@ -7,10 +7,12 @@ require(googlesheets4)
 
 # helper functions
 source("functions/filterInput.R")
+source("functions/previewButton.R")
 source("renderers/render.R", chdir = TRUE)
 
 # fetch data from google sheets
 googlesheets4::gs4_deauth()
+
 SHEET_ID <- "10eMzcaMgKPkKbALWkzPMKi6EXo3yt70PxqS6arhxHag"
 PLOTS <- googlesheets4::read_sheet(SHEET_ID, 1, col_types = "c")
 VARS <- googlesheets4::read_sheet(SHEET_ID, 2)
@@ -25,7 +27,6 @@ PLOTS %<>%
     # split vector attributes
     mutate(across(any_of(multipleVars), ~stringr::str_split(., ", ")))
 
-
 # UI ----------------------------------------------------------------------
 ui <- fluidPage(
     tags$head(
@@ -35,6 +36,9 @@ ui <- fluidPage(
         # highlight.js code highlighting
         tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/highlight.min.js"),
         tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.0.1/styles/default.min.css"),
+        
+        # custom styles
+        tags$link(rel="stylesheet", href="styles/previewButton.css"),
         
         # custom button sorting function
         shinyjs::useShinyjs(),
@@ -62,14 +66,10 @@ ui <- fluidPage(
         mainPanel(
             # buttons
             div( PLOTS %>% 
-                    select( id, name ) %>%
                     arrange( id ) %>% 
                     transpose() %>%
-                    map(~shiny::actionButton(.$id, .$name, 
-                                             class = "btn-primary", 
-                                             style = "margin: .2em .2em 0 0;")),
-                style = "display: flex; flex-flow: row wrap;",
-                id = "plot-button-container" ),
+                    map(previewButton),
+                id = "preview-button-container" ),
             
             # details
             # textOutput("details"),

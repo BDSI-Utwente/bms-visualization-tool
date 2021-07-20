@@ -1,6 +1,6 @@
 shinyjs.sortButtons = function( params ){
     const { hide } = shinyjs.getParams(params, { hide: false });
-    const container = $("#plot-button-container");
+    const container = $("#preview-button-container");
     const buttons = container.children();
     const sorted = buttons.sort((a,b) => {
         if(a.disabled != b.disabled) return a.disabled ? 1 : -1;

@@ -1,13 +1,5 @@
-#' Title
-#'
-#' @param var 
-#' @param data 
-#' @param el 
-#'
-#' @return
-#' @export
-#'
-#' @examples
+require(htmltools)
+
 renderPlotAttribute_Text <- function(var, data, el = htmltools::p ){
     if(var$multiple){
         data %>% map(p)

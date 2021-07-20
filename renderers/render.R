@@ -28,7 +28,7 @@ renderPlotAttribute <- function(var, plot){
         "title" = renderPlotAttribute_Title(var, data),
         "text" = renderPlotAttribute_Text(var, data),
         "image" = renderPlotAttribute_Image(var, data),
-        "markdown" = renderPlotAttribute_Markdown(var, data),
+        "markdown" = renderPlotAttribute_Markdown(var, data, plot),
         "package" = renderPlotAttribute_Link_Package(var, data),
         "link-internal" = renderPlotAttribute_Link_Internal(var, data),
         "link-external" = renderPlotAttribute_Link_External(var, data)
