@@ -21,6 +21,9 @@ VARS <- googlesheets4::read_sheet(SHEET_ID, 2)
 searchableVars <- VARS %>% filter( search ) %>% pull( variable )
 multipleVars <- VARS %>% filter( multiple ) %>% pull( variable )
 PLOTS %<>% 
+    # filter out plots marked as not used
+    filter( used %>% as.logical() ) %>%
+    
     # create single text for all searchable attributes
     unite(searchIndex, any_of(searchableVars), sep = "\n", remove = FALSE) %>%
      
