@@ -8,7 +8,7 @@ dir(BASE_ICONS_PATH) %>% print
 
 previewButton <- function(plot) {
     shiny::actionButton(plot$id, getPreview(plot), 
-                             class = "preview-button", 
+                             class = "button preview-button", 
                              style = "margin: .2em .2em 0 0;")
 }
 

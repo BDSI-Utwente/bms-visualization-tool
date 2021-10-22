@@ -6,6 +6,8 @@ source("renderText.R")
 source("renderImage.R")
 source("renderLink.R")
 source("renderMarkdown.R")
+source("renderRaw.R")
+
 # source("./renderRScript.R")
 # source("./renderInteractivePlot.R")
 
@@ -25,13 +27,14 @@ renderPlotAttribute <- function(var, plot){
     
     header <- h3(var$label)
     content <- switch (var$type,
-        "title" = renderPlotAttribute_Title(var, data),
-        "text" = renderPlotAttribute_Text(var, data),
-        "image" = renderPlotAttribute_Image(var, data),
-        "markdown" = renderPlotAttribute_Markdown(var, data, plot),
-        "package" = renderPlotAttribute_Link_Package(var, data),
-        "link-internal" = renderPlotAttribute_Link_Internal(var, data),
-        "link-external" = renderPlotAttribute_Link_External(var, data)
+                       "title" = renderPlotAttribute_Title(var, data),
+                       "text" = renderPlotAttribute_Text(var, data),
+                       "image" = renderPlotAttribute_Image(var, data),
+                       "markdown" = renderPlotAttribute_Markdown(var, data, plot),
+                       "template" = renderPlotAttribute_Raw(var, data),
+                       "package" = renderPlotAttribute_Link_Package(var, data),
+                       "link-internal" = renderPlotAttribute_Link_Internal(var, data),
+                       "link-external" = renderPlotAttribute_Link_External(var, data)
     )
     
     if(var$type != "title"){

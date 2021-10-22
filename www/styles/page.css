@@ -1,0 +1,129 @@
+*,
+::before,
+::after {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+}
+
+#header {
+    width: 100%;
+    background: #1f2229;
+    padding: 1rem;
+    margin: 0;
+
+    color: #eee;
+    text-transform: uppercase;
+    font-family: "Arial Narrow", Arial, Helvetica, sans-serif;
+    font-size: 3rem;
+    line-height: 3rem;
+}
+
+#content {
+    width: 100vw;
+    height: calc(100vh - 5rem);
+
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+#filters,
+#buttons,
+#details {
+    max-height: 100%;
+
+    transition: width 0.2s ease-in-out, max-width 0.2s ease-in-out;
+}
+
+#details, #filters-content, #buttons-content {
+    padding: 1em;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+#filters, #buttons {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+#filters {
+    background: #2e32381c;
+
+    flex: 1 0 20vw;
+    width: 100%;
+    max-width: min(350px, 20vw);
+}
+
+#filters-content {
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+#filters.collapsed {
+    flex: 0 0 min-content;
+}
+
+#filters.collapsed > :not(.collapse-toggle),
+#details.collapsed > :not(.collapse-toggle) {
+    display: none;
+}
+
+#buttons {
+    background: #2e323809;
+    flex: 2 0 40vw;
+}
+
+#buttons.collapsed {
+    flex: 0 0 min-content;
+}
+
+#buttons-content {
+    width: 100%;
+    height: max-content;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+#buttons.collapsed #buttons-content {
+    grid-template-columns: 150px;
+}
+
+#details {
+    flex: 5 1 auto;
+    margin-left: 1em;
+    transition: width 0.2s ease-in-out;
+}
+
+#details.collapsed {
+    width: 0px;
+    max-width: 0px;
+    
+    /* removes this element from it's parent rendering */
+    position: absolute;
+}
+
+.collapse-toggle {
+    display: none !important;
+    order: -5;
+    padding: 1em .25em;
+    
+    font-size: larger;
+    text-transform: uppercase;
+    font-family: "Arial Narrow", Arial, Helvetica, sans-serif;
+    font-weight: 200;
+    writing-mode: vertical-lr;
+    white-space: nowrap;
+    
+    cursor: pointer;
+    
+    transition: background 0.2s ease-in-out;
+}
+
+.collapse-toggle:hover, .collapse-toggle:active, .collapse-toggle:focus-within {
+    background: rgba(0,0,0,.1);
+}
+
+.can-collapse > .collapse-toggle {
+    display: block !important;
+}
