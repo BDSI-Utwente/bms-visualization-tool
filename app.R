@@ -89,7 +89,12 @@ ui <- fillPage(
                 id = "filters",
                 htmltools::div(
                     id = "filters-content",
+                    # search field
+                    tags$h2("Search"),
+                    shiny::textInput("search", "Search by name, description, usage or package"),
+                    
                     # build list of filter inputs from variables defined in the spreadsheet.
+                    tags$h2("Filter"),
                     VARS %>%
                         filter(filter) %>%
                         rowwise() %>%
@@ -98,7 +103,7 @@ ui <- fillPage(
                                   data = PLOTS[[id]] %>% list,
                                   multiple) %>%
                         transpose() %>%
-                        map( ~ createFilterInput(.$id, .$label, .$multiple, .$data))
+                        map( ~ createFilterInput(.$id, .$label, .$multiple, .$data)),
                 ),
                 
                 htmltools::div(
@@ -149,7 +154,12 @@ server <- function(input, output, session) {
     filterObserver <<- observe({
         filters <- VARS %>%
             filter(filter == TRUE)
-        plots <- PLOTS %>% applyFilter(filters, input)
+        plots <- PLOTS %>%
+            applyFilter(filters, input)
+        
+        if(input$search != ""){
+            plots %<>% filter(stringr::str_detect(searchIndex, regex(input$search, ignore_case = TRUE)))
+        }
         
         # after filtering data, update available choices on UI
         for (filter in filters %>% transpose()) {
@@ -175,6 +185,7 @@ server <- function(input, output, session) {
         }
         shinyjs::js$sortButtons(hide = TRUE)
     })
+    
     
     # output blocks -----------------------------------------------------------
     output$details <- renderText({
