@@ -11,7 +11,7 @@ source("functions/previewButton.R")
 source("functions/applyTemplate.R")
 source("renderers/render.R", chdir = TRUE)
 
-# fetch data from google sheets
+# fetch data from Google sheets
 googlesheets4::gs4_deauth()
 
 SHEET_ID <- "10eMzcaMgKPkKbALWkzPMKi6EXo3yt70PxqS6arhxHag"

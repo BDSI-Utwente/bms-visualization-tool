@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "sharp-cli": "^1.15.0"
+  }
+}

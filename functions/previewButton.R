@@ -2,9 +2,6 @@ require(shiny)
 
 BASE_ICONS_PATH <- "images/icons"
 UNKNOWN_ICON <- "unknown.png"
-print("paths")
-print(getwd())
-dir(BASE_ICONS_PATH) %>% print
 
 previewButton <- function(plot) {
     shiny::actionButton(plot$id, getPreview(plot), 
