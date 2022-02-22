@@ -1,4 +1,4 @@
-name: Compress Images
+name: optimize and deploy
 on:
   push:
     paths:
@@ -21,8 +21,8 @@ jobs:
       - uses: actions/cache@v2
         id: cache-npm
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          path: node_modules
+          key: $npm-{{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
           
