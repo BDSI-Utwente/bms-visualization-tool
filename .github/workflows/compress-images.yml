@@ -1,17 +1,11 @@
 name: optimize and deploy
 on:
   push:
-    paths:
-      - '**.jpg'
-      - '**.jpeg'
-      - '**.png'
-      - '**.webp'
-      
   workflow_dispatch:
       
 jobs:
   optimize:
-    if: "!contains(github.event.head_commit.message, '[automated]')"
+    if: "!contains(github.event.head_commit.message, '[automated]') && !contains(github.event.head_commit.message, '[no-optimize]')"
     name: Compress Images
     runs-on: ubuntu-latest
     steps:        
@@ -53,11 +47,10 @@ jobs:
     name: Deploy to shinyapps
     if: "!contains(github.event.head_commit.message, '[automated]') && !contains(github.event.head_commit.message, '[no-deploy]')"
     runs-on: ubuntu-latest
-    needs: [optimize]
     steps:
       - uses: actions/checkout@v2
       - name: deploy
-        uses: BDSI-Utwente/shinyapps-deploy-github-action@b9c1f6a8a2b53eb228479a944693013ab37b2914
+        uses: BDSI-Utwente/shinyapps-deploy-github-action
         with:
           appName: bms-visualization-tool
           accountName: bdsi
