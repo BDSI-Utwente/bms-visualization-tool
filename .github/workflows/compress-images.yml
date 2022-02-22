@@ -8,17 +8,18 @@ on:
       - '**.webp'
       
   workflow_dispatch:
-
       
 jobs:
   build:
-    name: calibreapp/image-actions
+    if: '!contains(github.event.head_commit.message, "[automated]")'
+    name: Compress Images
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
         
       - name: Compress Images
+        id: compress
         uses: calibreapp/image-actions@main
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
@@ -30,6 +31,10 @@ jobs:
         
       - name: Update icons
         run: npm run update-icons
-
-            
+        
+      - name: Create commit
+        run: |
+          git add .
+          git commit -am "[automated] optimize images\n\n${{steps.compress.outputs.markdown}}"
+          git push
     
