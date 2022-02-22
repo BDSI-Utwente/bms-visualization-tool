@@ -14,9 +14,21 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[automated]')"
     name: Compress Images
     runs-on: ubuntu-latest
-    steps:
+    steps:        
       - name: Checkout Repo
         uses: actions/checkout@v2
+        
+      - uses: actions/cache@v2
+        id: cache-npm
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+          
+      - name: Install dependencies
+        if: steps.cache-npm.outputs.cache-hit != 'true'
+        run: npm install
         
       - name: Compress Images
         id: compress
@@ -25,15 +37,14 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           ignorePaths: "node_modules/**,www/images/icons/**"
           compressOnly: true
-          
-      - name: Install dependencies
-        run: npm install
         
       - name: Update icons
         run: npm run update-icons
         
       - name: Create commit
         run: |
+          git config user.name "image optimization bot"
+          git config user.mail "bot@github.com"
           git add .
           git commit -am "[automated] optimize images\n\n${{steps.compress.outputs.markdown}}"
           git push
