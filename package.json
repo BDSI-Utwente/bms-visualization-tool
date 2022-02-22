@@ -1,4 +1,7 @@
 {
+    "scripts": {
+        "update-icons": "sharp -i www/images/plots/* -o www/images/icons/ resize 400 300 --optimize" 
+    },
   "devDependencies": {
     "sharp-cli": "^1.15.0"
   }
