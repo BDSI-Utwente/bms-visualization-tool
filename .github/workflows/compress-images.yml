@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: deploy
-        uses: BDSI-Utwente/shinyapps-deploy-github-action
+        uses: BDSI-Utwente/shinyapps-deploy-github-action@0d94468179149fc492ea8336e838b4f49cbc746d
         with:
           appName: bms-visualization-tool
           accountName: bdsi
