@@ -46,6 +46,6 @@ jobs:
           git config user.name "image optimization bot"
           git config user.mail "bot@github.com"
           git add .
-          git commit -am "[automated] optimize images"
+          git commit -am "[automated] optimize images" || echo "nothing to optimize"
           git push
     
