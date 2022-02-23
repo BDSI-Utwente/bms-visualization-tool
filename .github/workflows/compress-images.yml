@@ -57,7 +57,7 @@ jobs:
           accountName: bdsi
           accountToken: ${{ secrets.SHINYAPPS_TOKEN }}
           accountSecret: ${{ secrets.SHINYAPPS_SECRET }}
-      - run: "echo App deployed at: ${{outputs.deploy.url}}"
+      - run: "echo App deployed at: ${{steps.deploy.outputs.url}}"
           
         
 
