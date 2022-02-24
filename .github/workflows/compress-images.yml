@@ -1,0 +1,63 @@
+name: optimize and deploy
+on:
+  push:
+  workflow_dispatch:
+      
+jobs:
+  optimize:
+    if: "!contains(github.event.head_commit.message, '[automated]') && !contains(github.event.head_commit.message, '[no-optimize]')"
+    name: Compress Images
+    runs-on: ubuntu-latest
+    steps:        
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+        
+      - uses: actions/cache@v2
+        id: cache-npm
+        with:
+          path: node_modules
+          key: npm-${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+          
+      - name: Install dependencies
+        if: steps.cache-npm.outputs.cache-hit != 'true'
+        run: npm install
+        
+      - name: Compress Images
+        id: compress
+        uses: calibreapp/image-actions@main
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          ignorePaths: "node_modules/**,www/images/icons/**"
+          compressOnly: true
+        
+      - name: Update icons
+        run: npm run update-icons
+        
+      - name: Create commit
+        run: |
+          git config user.name "image optimization bot"
+          git config user.mail "bot@github.com"
+          git add .
+          git commit -am "[automated] optimize images" || echo "nothing to optimize"
+          git push
+          
+  deploy:
+    name: Deploy to shinyapps
+    needs: [optimize]
+    if: "!contains(github.event.head_commit.message, '[automated]') && !contains(github.event.head_commit.message, '[no-deploy]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: deploy
+        uses: BDSI-Utwente/shinyapps-deploy-github-action@v1
+        with:
+          appName: bms-visualization-tool
+          accountName: bdsi
+          accountToken: ${{ secrets.SHINYAPPS_TOKEN }}
+          accountSecret: ${{ secrets.SHINYAPPS_SECRET }}
+      - run: "echo App deployed at: ${{steps.deploy.outputs.url}}"
+          
+        
+
