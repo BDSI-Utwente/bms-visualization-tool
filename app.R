@@ -13,9 +13,6 @@ source("renderers/render.R", chdir = TRUE)
 
 # fetch data from Google sheets
 googlesheets4::gs4_deauth()
-
-# hallo, wijziging!
-
 SHEET_ID <- "10eMzcaMgKPkKbALWkzPMKi6EXo3yt70PxqS6arhxHag"
 
 prepareData <- function() {
@@ -35,7 +32,7 @@ prepareData <- function() {
     
     # split vector attributes
     PLOTS %<>%
-        mutate(across(any_of(multipleVars), ~ stringr::str_split(., ", ")))
+        mutate(across(any_of(multipleVars), ~ stringr::str_split(., ", ?")))
     
     # apply templates
     for (templateVar in templateVars) {

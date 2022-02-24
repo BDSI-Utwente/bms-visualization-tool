@@ -127,3 +127,7 @@
 .can-collapse > .collapse-toggle {
     display: block !important;
 }
+
+.link-list a {
+    display: block;
+}
