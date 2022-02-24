@@ -20,7 +20,7 @@ renderPlotAttribute_Link_External <-
 renderPlotAttribute_Link_Internal <- function(var, data) {
     if (var$multiple) {
         div(class="link-list",
-            data %>% map( ~ actionLink(., .)))
+            data %>% map( ~ a(., href=paste0("#", .))))
     } else {
         actionLink(data, data)
     }

@@ -102,7 +102,7 @@ ui <- fillPage(
                                   data = PLOTS[[id]] %>% list,
                                   multiple) %>%
                         transpose() %>%
-                        map( ~ createFilterInput(.$id, .$label, .$multiple, .$data)),
+                        map(~ createFilterInput(.$id, .$label, .$multiple, .$data)),
                 ),
                 
                 htmltools::div(
@@ -141,23 +141,42 @@ server <- function(input, output, session) {
     plot <- reactiveVal(NULL)
     
     # create a list of observers, one for each button
-    buttonObservers <<- PLOTS %>%
+    # TODO: these can all be replaced with the hash observer?
+    buttonObservers <- PLOTS %>%
         pull(id) %>%
-        map( ~ observeEvent(input[[.]], {
+        map(~ observeEvent(input[[.]], {
             id <- .
-            plot(PLOTS[PLOTS$id == id, ] %>% slice(1)) # for some reason filter function doesn't work?
+            plot(PLOTS[PLOTS$id == id,] %>% slice(1)) # for some reason filter function doesn't work?
             cat("selected:", plot()$id, "\n")
         }))
     
+    # check plot ids' in url
+    urlObserver <- observe({
+        hash <- session$clientData$url_hash %>% str_remove("#")
+        if (hash != "") {
+            .plot <- PLOTS[PLOTS$id == hash,] %>% slice(1)
+            
+            if (nrow(.plot) >= 1) {
+                plot(.plot)
+                cat("selected from hash:", hash, "\n")
+            } else {
+                cat("no plot found with id:", hash, "\n")
+            }
+        }
+    })
+    
     # filter observer ------------------------------------------
-    filterObserver <<- observe({
+    filterObserver <- observe({
         filters <- VARS %>%
             filter(filter == TRUE)
         plots <- PLOTS %>%
             applyFilter(filters, input)
         
-        if(input$search != ""){
-            plots %<>% filter(stringr::str_detect(searchIndex, regex(input$search, ignore_case = TRUE)))
+        if (input$search != "") {
+            plots %<>% filter(stringr::str_detect(
+                searchIndex,
+                regex(input$search, ignore_case = TRUE)
+            ))
         }
         
         # after filtering data, update available choices on UI
@@ -200,7 +219,7 @@ server <- function(input, output, session) {
                 filter(type != "hidden") %>%
                 transpose() %>%
                 simplify_all() %>%
-                map( ~ renderPlotAttribute(., selected)),
+                map(~ renderPlotAttribute(., selected)),
             id = "details-container"
         ) %>% as.character()
     })
