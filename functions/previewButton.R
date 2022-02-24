@@ -1,6 +1,7 @@
 require(shiny)
 
 BASE_ICONS_PATH <- "images/icons"
+BASE_PLOTS_PATH <- "images/plots"
 UNKNOWN_ICON <- "unknown.png"
 
 previewButton <- function(plot) {
@@ -25,6 +26,14 @@ getPreviewIconPath <- function(plot) {
         return(iconPath)
     }
     iconPath <- file.path(BASE_ICONS_PATH, paste0(stringr::str_replace_all(plot$id, "-", "_"), ".png"))
+    if(file.exists(localPath(iconPath))){
+        return(iconPath)
+    }   
+    iconPath <- file.path(BASE_PLOTS_PATH, paste0(plot$id, ".png"))
+    if(file.exists(localPath(iconPath))){
+        return(iconPath)
+    }
+    iconPath <- file.path(BASE_PLOTS_PATH, paste0(stringr::str_replace_all(plot$id, "-", "_"), ".png"))
     if(file.exists(localPath(iconPath))){
         return(iconPath)
     }   
